@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARK Aberration — Surface Timer (Seguro)</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg: #060b12;
+    --sidebar: #0a121c;
+    --card: #0d1824;
+    --card-border: #1a3045;
+    --primary: #00e5ff;
+    --safe: #00ff9d;
+    --danger: #ff4d6d;
+    --warning: #ffb020;
+    --text: #eaf6ff;
+    --muted: #7e9cb4;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+  }
+
+  .sidebar {
+    width: 250px;
+    background: linear-gradient(180deg, #0a121c 0%, #071018 100%);
+    border-right: 1px solid var(--card-border);
+    padding: 28px 18px;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    height: 100vh;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 42px;
+  }
+
+  .logo-icon {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #00e5ff, #0077ff);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    color: #001a22;
+    box-shadow: 0 0 24px rgba(0, 229, 255, 0.35);
+  }
+
+  .logo-text strong {
+    display: block;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 16px;
+    color: var(--primary);
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 16px;
+    border-radius: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-size: 14.5px;
+  }
+
+  .nav-item.active {
+    background: rgba(0, 229, 255, 0.12);
+    color: var(--primary);
+    border-left: 3px solid var(--primary);
+  }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 16px;
+    background: rgba(0,0,0,0.35);
+    border-radius: 14px;
+    font-size: 12.5px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .sidebar-footer strong {
+    color: var(--primary);
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .main {
+    margin-left: 250px;
+    flex: 1;
+    padding: 28px 36px 40px;
+    max-width: 1500px;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 28px;
+  }
+
+  .header h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 28px;
+    background: linear-gradient(90deg, #00e5ff, #00ff9d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .header p {
+    color: var(--muted);
+    font-size: 14px;
+    margin-top: 6px;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 18px;
+    padding: 22px;
+    margin-bottom: 20px;
+  }
+
+  .inputs-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr) auto;
+    gap: 16px;
+    align-items: end;
+  }
+
+  label {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 7px;
+  }
+
+  input, select {
+    width: 100%;
+    background: #08121c;
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-size: 15px;
+  }
+
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+
+  .btn {
+    background: linear-gradient(135deg, #00c8ff, #0077ff);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 13px 24px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .top-grid {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 22px;
+  }
+
+  .status-main {
+    text-align: center;
+    padding: 10px 0;
+  }
+
+  .status-badge {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+
+  .status-badge.safe { color: var(--safe); }
+  .status-badge.danger { color: var(--danger); }
+
+  .countdown {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 58px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    margin: 10px 0 14px;
+  }
+
+  .countdown.safe {
+    color: var(--safe);
+    text-shadow: 0 0 40px rgba(0, 255, 157, 0.3);
+  }
+
+  .countdown.danger {
+    color: var(--danger);
+    text-shadow: 0 0 40px rgba(255, 77, 109, 0.3);
+  }
+
+  .sub-info {
+    color: var(--muted);
+    font-size: 13.5px;
+  }
+
+  .mini-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-top: 22px;
+  }
+
+  .mini-card {
+    background: rgba(0,0,0,0.28);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 16px;
+  }
+
+  .mini-card h4 {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .mini-card .value {
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .right-panel h3 {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  .season-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 11px 14px;
+    border-radius: 10px;
+    margin-bottom: 6px;
+    font-size: 13.5px;
+  }
+
+  .season-item.active {
+    background: rgba(0, 229, 255, 0.1);
+    border: 1px solid rgba(0, 229, 255, 0.35);
+  }
+
+  .warning-box {
+    margin-top: 20px;
+    padding: 14px;
+    background: rgba(255, 176, 32, 0.1);
+    border: 1px solid rgba(255, 176, 32, 0.3);
+    border-radius: 12px;
+    font-size: 13px;
+    color: #ffc14d;
+    line-height: 1.5;
+  }
+
+  .danger-box {
+    margin-top: 14px;
+    padding: 14px;
+    background: rgba(255, 77, 109, 0.1);
+    border: 1px solid rgba(255, 77, 109, 0.3);
+    border-radius: 12px;
+    font-size: 13px;
+    color: #ff8a9b;
+    line-height: 1.5;
+  }
+
+  @media (max-width: 1100px) {
+    .top-grid { grid-template-columns: 1fr; }
+    .inputs-row { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media (max-width: 800px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; padding: 18px; }
+    .countdown { font-size: 42px; }
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">A</div>
+    <div class="logo-text">
+      <strong>ARK</strong>
+      ABERRATION
+    </div>
+  </div>
+
+  <div class="nav-item active">🏠 Principal</div>
+  <div class="nav-item">📅 Histórico</div>
+  <div class="nav-item">⚙️ Configurações</div>
+  <div class="nav-item">ℹ️ Sobre</div>
+
+  <div class="sidebar-footer">
+    <strong>Versão Segura</strong>
+    Horários com margem de segurança para evitar mortes na beira do horário.
+  </div>
+</aside>
+
+<main class="main">
+  <div class="header">
+    <div>
+      <h1>SURFACE TIMER</h1>
+      <p>Versão com margem de segurança — saia sempre com antecedência!</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="inputs-row">
+      <div>
+        <label>Dia do jogo</label>
+        <input type="number" id="day" value="17375" min="0">
+      </div>
+      <div>
+        <label>Hora do jogo (24h)</label>
+        <input type="text" id="time" value="23:54" placeholder="HH:MM" maxlength="5">
+      </div>
+      <div>
+        <label>Zona da superfície</label>
+        <select id="zone">
+          <option value="north">Norte (Verde / Azul)</option>
+          <option value="south">Sul (Vermelha)</option>
+        </select>
+      </div>
+      <div>
+        <label>Velocidade</label>
+        <input type="number" id="speed" value="1" step="0.1" min="0.1">
+      </div>
+      <div>
+        <button class="btn" onclick="start()">🔄 Atualizar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="top-grid">
+    <div class="card">
+      <div class="status-main">
+        <div id="statusBadge" class="status-badge safe">🛡️ SUPERFÍCIE SEGURA</div>
+        <div id="countdown" class="countdown safe">00:00:00</div>
+        <div class="sub-info" id="detail">—</div>
+        <div class="sub-info" id="subInfo" style="margin-top:6px;">—</div>
+      </div>
+
+      <div class="mini-grid">
+        <div class="mini-card">
+          <h4>☀️ Estação Atual</h4>
+          <div class="value" id="currentSeason">—</div>
+        </div>
+        <div class="mini-card">
+          <h4>🛡️ Saia antes de</h4>
+          <div class="value" id="safeEnd">—</div>
+        </div>
+        <div class="mini-card">
+          <h4>🌙 Próxima estação boa</h4>
+          <div class="value" id="nextGood">—</div>
+        </div>
+      </div>
+
+      <div class="danger-box">
+        ⚠️ <strong>Importante:</strong> Mesmo quando estiver "Seguro", saia pelo menos <strong>8 a 12 minutos antes</strong> do horário mostrado. O calor começa um pouco antes do horário oficial.
+      </div>
+    </div>
+
+    <div class="card right-panel">
+      <h3>Ciclo das Estações</h3>
+      <div class="season-item" id="s50">
+        <span>0 – 3</span>
+        <span>50% Dia / 50% Noite</span>
+      </div>
+      <div class="season-item" id="s90">
+        <span>4 – 6</span>
+        <span>90% Dia / 10% Noite</span>
+      </div>
+      <div class="season-item" id="s10">
+        <span>7 – 9</span>
+        <span>10% Dia / 90% Noite</span>
+      </div>
+
+      <div class="warning-box">
+        🔥 Reapers aparecem principalmente à noite.<br>
+        Use Rock Drake com cloaking se possível.
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+
+let running = false;
+let timer = null;
+let gameMinutes = 0;
+let lastReal = 0;
+let speed = 1;
+let day = 0;
+let lastAlertKey = "";
+let audioContext = null;
+
+// Horários mais seguros (com margem)
+const SEASON_TIMES = {
+  // 50% 
+  50: {
+    north: { safeStart: 19*60 + 0,  safeEnd: 6*60 + 30 },   // 19:00 → 06:30
+    south: { safeStart: 19*60 + 10, safeEnd: 6*60 + 40 }
+  },
+  // 90% Dia / 10% Noite (noite bem curta)
+  90: {
+    north: { safeStart: 23*60 + 20, safeEnd: 2*60 + 10 },   // 23:20 → 02:10
+    south: { safeStart: 23*60 + 25, safeEnd: 2*60 + 15 }
+  },
+  // 10% Dia / 90% Noite (melhor estação)
+  10: {
+    north: { safeStart: 14*60 + 30, safeEnd: 10*60 + 50 },  // 14:30 → 10:50
+    south: { safeStart: 14*60 + 40, safeEnd: 11*60 + 0 }
+  }
+};
+
+function getSeasonFromDay(d) {
+  const last = d % 10;
+  if (last <= 3) return 50;
+  if (last <= 6) return 90;
+  return 10;
+}
+
+function getRanges() {
+  const season = getSeasonFromDay(day + Math.floor(gameMinutes / 1440));
+  const zone = $("zone").value;
+  const times = SEASON_TIMES[season][zone];
+
+  let safeDuration = (times.safeEnd - times.safeStart + 1440) % 1440;
+  if (safeDuration === 0) safeDuration = 1440;
+
+  return {
+    safeStart: times.safeStart,
+    safeEnd: times.safeEnd,
+    safeDuration,
+    season
+  };
+}
+
+function fmt(m) {
+  m = ((m % 1440) + 1440) % 1440;
+  return String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(Math.floor(m % 60)).padStart(2, "0");
+}
+
+function hms(minutes) {
+  let s = Math.max(0, Math.round(minutes * 60));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}`;
+}
+
+function inRange(x, a, b) {
+  return a < b ? (x >= a && x < b) : (x >= a || x < b);
+}
+
+function parseTime(str) {
+  const match = str.trim().match(/^([01]?[0-9]|2[0-3]):([0-5][0-9])$/);
+  if (!match) return null;
+  return parseInt(match[1]) * 60 + parseInt(match[2]);
+}
+
+function playAlert(urgent = false) {
+  try {
+    audioContext = audioContext || new (window.AudioContext || window.webkitAudioContext)();
+    const now = audioContext.currentTime;
+    const freqs = urgent ? [880, 1100, 880] : [660, 880];
+    freqs.forEach((f, i) => {
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      osc.frequency.value = f;
+      gain.gain.setValueAtTime(0.0001, now + i * 0.18);
+      gain.gain.exponentialRampToValueAtTime(0.2, now + i * 0.18 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.18 + 0.15);
+      osc.connect(gain);
+      gain.connect(audioContext.destination);
+      osc.start(now + i * 0.18);
+      osc.stop(now + i * 0.18 + 0.16);
+    });
+  } catch(e) {}
+}
+
+function update() {
+  if (running) {
+    const now = performance.now();
+    gameMinutes += (now - lastReal) / 1000 * speed;
+    lastReal = now;
+  }
+
+  const currentDay = day + Math.floor(gameMinutes / 1440);
+  const r = getRanges();
+  const t = ((gameMinutes % 1440) + 1440) % 1440;
+  const safe = inRange(t, r.safeStart, r.safeEnd);
+
+  const badge = $("statusBadge");
+  const cd = $("countdown");
+
+  if (safe) {
+    badge.className = "status-badge safe";
+    badge.innerHTML = "🛡️ SUPERFÍCIE SEGURA";
+    cd.className = "countdown safe";
+  } else {
+    badge.className = "status-badge danger";
+    badge.innerHTML = "🔥 SUPERFÍCIE PERIGOSA";
+    cd.className = "countdown danger";
+  }
+
+  let target = safe ? r.safeEnd : r.safeStart;
+  let delta = (target - t + 1440) % 1440;
+  if (delta < 0.01) delta = 0;
+
+  $("countdown").textContent = hms(delta);
+  $("detail").textContent = safe 
+    ? `Você pode explorar. Saia ANTES de: ${fmt(r.safeEnd)}`
+    : `Não suba agora. Próxima janela segura: ${fmt(r.safeStart)}`;
+  $("subInfo").textContent = `Dia ${currentDay} • Hora: ${fmt(t)} • Zona: ${$("zone").value === "north" ? "Norte" : "Sul"} • ${speed}x`;
+  $("currentSeason").textContent = `${r.season}% Dia / ${100-r.season}% Noite`;
+  $("safeEnd").textContent = fmt(r.safeEnd);
+
+  // Próxima estação boa
+  let nextGood = currentDay;
+  while (getSeasonFromDay(nextGood) !== 10) nextGood++;
+  $("nextGood").textContent = nextGood === currentDay ? "Agora!" : "Dia " + nextGood;
+
+  // Destacar estação
+  ["s50","s90","s10"].forEach(id => $(id).classList.remove("active"));
+  if (r.season === 50) $("s50").classList.add("active");
+  if (r.season === 90) $("s90").classList.add("active");
+  if (r.season === 10) $("s10").classList.add("active");
+
+  // Alerta
+  const alertKey = currentDay + "-" + Math.floor(target) + "-" + safe;
+  if (safe && delta <= 8 && delta > 0 && alertKey !== lastAlertKey) {
+    lastAlertKey = alertKey;
+    playAlert(delta <= 3);
+  }
+
+  if (running) timer = requestAnimationFrame(update);
+}
+
+function start() {
+  const parsed = parseTime($("time").value);
+  if (parsed === null) {
+    alert("Hora inválida! Use formato 24h (ex: 14:30 ou 23:54)");
+    return;
+  }
+
+  cancelAnimationFrame(timer);
+  lastAlertKey = "";
+  day = Number($("day").value) || 0;
+  gameMinutes = parsed;
+  speed = Number($("speed").value) || 1;
+  running = true;
+  lastReal = performance.now();
+  update();
+}
+
+// Formatação automática da hora
+$("time").addEventListener("input", function(e) {
+  let v = e.target.value.replace(/[^\d]/g, "");
+  if (v.length >= 3) v = v.slice(0,2) + ":" + v.slice(2,4);
+  e.target.value = v.slice(0,5);
+});
+
+start();
+</script>
+</body>
+</html>
